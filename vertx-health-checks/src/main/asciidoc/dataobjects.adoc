@@ -4,8 +4,8 @@
 == Status
 
 ++++
- Represents the outcome of a health check procedure. Each procedure produces a link indicating either UP
- or DOWN. Optionally, it can also provide additional data.
+ Represents the outcome of a health check procedure. Each procedure produces a link indicating either OK
+ or KO. Optionally, it can also provide additional data.
 ++++
 '''
 
@@ -17,13 +17,13 @@
 +++
 Sets the metadata.
 +++
+|[[ok]]`ok`|`Boolean`|
++++
+Sets whether or not the current status is positive (UP) or negative (DOWN).
++++
 |[[procedureInError]]`procedureInError`|`Boolean`|
 +++
 Sets whether or not the procedure attached to this status has failed (timeout, error...).
-+++
-|[[up]]`up`|`Boolean`|
-+++
-Sets whether or not the current status is positive (UP) or negative (DOWN).
 +++
 |===
 

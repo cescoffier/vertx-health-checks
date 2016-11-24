@@ -4,8 +4,8 @@ import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
- * Represents the outcome of a health check procedure. Each procedure produces a {@link Status} indicating either UP
- * or DOWN. Optionally, it can also provide additional data.
+ * Represents the outcome of a health check procedure. Each procedure produces a {@link Status} indicating either OK
+ * or KO. Optionally, it can also provide additional data.
  *
  * @author <a href="http://escoffier.me">Clement Escoffier</a>
  */
@@ -18,7 +18,7 @@ public class Status {
    * @return the created {@link Status}
    */
   public static Status OK() {
-    return new Status().setUp(true);
+    return new Status().setOk(true);
   }
 
   /**
@@ -27,7 +27,7 @@ public class Status {
    * @return the created {@link Status}
    */
   public static Status OK(JsonObject data) {
-    return new Status().setUp(true).setData(data);
+    return new Status().setOk(true).setData(data);
   }
 
   /**
@@ -36,7 +36,7 @@ public class Status {
    * @return the created {@link Status}
    */
   public static Status KO() {
-    return new Status().setUp(false);
+    return new Status().setOk(false);
   }
 
 
@@ -46,13 +46,13 @@ public class Status {
    * @return the created {@link Status}
    */
   public static Status KO(JsonObject data) {
-    return new Status().setUp(false).setData(data);
+    return new Status().setOk(false).setData(data);
   }
 
   /**
    * Whether or not the check is positive or negative.
    */
-  private boolean up;
+  private boolean ok;
 
   /**
    * Optional metadata attached to the status.
@@ -69,7 +69,7 @@ public class Status {
   }
 
   public Status(Status other) {
-    this.up = other.up;
+    this.ok = other.ok;
     this.data = other.data;
     this.procedureInError = other.procedureInError;
   }
@@ -87,19 +87,35 @@ public class Status {
   /**
    * @return whether or not the current status is positive or negative.
    */
-  public boolean isUp() {
-    return up;
+  public boolean isOk() {
+    return ok;
   }
 
   /**
    * Sets whether or not the current status is positive (UP) or negative (DOWN).
    *
-   * @param up {@code true} for UP, {@code false} for DOWN
+   * @param ok {@code true} for UP, {@code false} for DOWN
    * @return the current status
    */
-  public Status setUp(boolean up) {
-    this.up = up;
+  public Status setOk(boolean ok) {
+    this.ok = ok;
     return this;
+  }
+
+  /**
+   * Sets the outcome of the status to KO.
+   * @return the current status
+   */
+  public Status setKO() {
+    return this.setOk(false);
+  }
+
+  /**
+   * Sets the outcome of the status to OK.
+   * @return the current status
+   */
+  public Status setOK() {
+    return this.setOk(true);
   }
 
   /**

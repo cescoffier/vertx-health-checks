@@ -27,8 +27,6 @@ public class HealthCheckTest {
   private Vertx vertx;
   private HealthCheckHandler handler;
 
-  //TODO Error in checks (500)
-
   @Before
   public void setUp() {
     vertx = Vertx.vertx();
@@ -403,7 +401,7 @@ public class HealthCheckTest {
   }
 
 
-  private JsonObject get(int status) {
+  public static JsonObject get(int status) {
     String json = RestAssured.get("/health")
       .then()
       .statusCode(status)
@@ -412,7 +410,7 @@ public class HealthCheckTest {
     return new JsonObject(json);
   }
 
-  private JsonObject get(String path, int status) {
+  public static JsonObject get(String path, int status) {
     String json = RestAssured.get("/health/" + path)
       .then()
       .statusCode(status)

@@ -16,7 +16,7 @@ public class StatusHelper {
       json.put("id", name);
     }
     if (ar.succeeded()) {
-      if (ar.result() != null && !ar.result().isUp()) {
+      if (ar.result() != null && !ar.result().isOk()) {
         json.put("status", "DOWN");
       } else {
         json.put("status", "UP");

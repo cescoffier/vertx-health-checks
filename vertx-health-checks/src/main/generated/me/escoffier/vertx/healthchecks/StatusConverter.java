@@ -30,11 +30,11 @@ public class StatusConverter {
     if (json.getValue("data") instanceof JsonObject) {
       obj.setData(((JsonObject)json.getValue("data")).copy());
     }
+    if (json.getValue("ok") instanceof Boolean) {
+      obj.setOk((Boolean)json.getValue("ok"));
+    }
     if (json.getValue("procedureInError") instanceof Boolean) {
       obj.setProcedureInError((Boolean)json.getValue("procedureInError"));
-    }
-    if (json.getValue("up") instanceof Boolean) {
-      obj.setUp((Boolean)json.getValue("up"));
     }
   }
 
@@ -42,7 +42,7 @@ public class StatusConverter {
     if (obj.getData() != null) {
       json.put("data", obj.getData());
     }
+    json.put("ok", obj.isOk());
     json.put("procedureInError", obj.isProcedureInError());
-    json.put("up", obj.isUp());
   }
 }
