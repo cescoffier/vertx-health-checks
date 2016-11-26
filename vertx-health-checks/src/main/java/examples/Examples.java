@@ -121,4 +121,9 @@ public class Examples {
     );
   }
 
+  public void publishOnEventBus(Vertx vertx, HealthChecks healthChecks) {
+    vertx.eventBus().consumer("health",
+      message -> healthChecks.invoke(message::reply));
+  }
+
 }

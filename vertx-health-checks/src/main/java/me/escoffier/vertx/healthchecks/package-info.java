@@ -35,7 +35,7 @@
  *
  * The central object is {@link me.escoffier.vertx.healthchecks.HealthChecks}. You can create a new instance using:
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#example1(io.vertx.core.Vertx)}
  * ----
@@ -49,7 +49,7 @@
  * * using an existing instance of {@link me.escoffier.vertx.healthchecks.HealthChecks}
  * * let the handler create one instance for you.
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#example2(io.vertx.core.Vertx)}
  * ----
@@ -59,7 +59,7 @@
  * beforehand, you can register the procedure on this object directly. Registrations and unregistrations can be done at
  * anytime, even after the route registration:
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#example2(io.vertx.core.Vertx, io.vertx.ext.web.Router)}
  * ----
@@ -84,7 +84,7 @@
  *
  * {@link me.escoffier.vertx.healthchecks.Status} can also provide additional data:
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#example4(io.vertx.core.Vertx, io.vertx.ext.web.Router)}
  * ----
@@ -92,7 +92,7 @@
  * Procedures can be organised by groups. The procedure name indicates the group. The procedures are organized as a
  * tree and the structure is mapped to HTTP urls (see below).
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#example3(io.vertx.core.Vertx, io.vertx.ext.web.Router)}
  * ----
@@ -171,7 +171,7 @@
  *
  * This check reports whether or not a connection to the database can be established:
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#jdbc(io.vertx.ext.jdbc.JDBCClient, me.escoffier.vertx.healthchecks.HealthCheckHandler)}
  * ----
@@ -180,7 +180,7 @@
  *
  * This check reports whether or not a service (here a HTTP endpoint) is available in the service discovery:
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#service}
  * ----
@@ -191,7 +191,7 @@
  * ping/pong, but it can be more sophisticated. This check can be used to check whether or not a verticle is ready
  * if it's listening on a specific event address.
  *
- * [source]
+ * [source, $lang]
  * ----
  * {@link examples.Examples#eventbus(io.vertx.core.Vertx, me.escoffier.vertx.healthchecks.HealthCheckHandler)}
  * ----
@@ -211,6 +211,16 @@
  *
  * The resulting object is passed to the auth provider to authenticate the request. If the authentication failed, it
  * returns a `403 - FORBIDDEN` response.
+ *
+ * == Exposing health checks on the event bus
+ *
+ * While exposing the health checks using HTTP with the Vert.x web handler is convenient, it can be useful
+ * to expose the data differently. This section gives an example to expose the data on the event bus:
+ *
+ * [source, $lang]
+ * ----
+ * {@link examples.Examples#publishOnEventBus(io.vertx.core.Vertx, me.escoffier.vertx.healthchecks.HealthChecks)}
+ * ----
  *
  */
 @ModuleGen(name = "vertx-health-checks", groupPackage = "me.escoffier.vertx")
