@@ -1,8 +1,10 @@
 package me.escoffier.vertx.healthchecks;
 
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
 import me.escoffier.vertx.healthchecks.impl.HealthCheckHandlerImpl;
 
@@ -26,13 +28,46 @@ public interface HealthCheckHandler extends Handler<RoutingContext> {
 
   /**
    * Creates an instance of the default implementation of the {@link HealthCheckHandler}.
+   * This function creates a new instance of {@link HealthChecks}.
+   *
+   * @param vertx    the Vert.x instance, must not be {@code null}
+   * @param provider the Authentication provider used to authenticate the HTTP request
+   * @return the created instance
+   */
+  static HealthCheckHandler create(Vertx vertx, AuthProvider provider) {
+    return new HealthCheckHandlerImpl(vertx, provider);
+  }
+
+  /**
+   * Creates an instance of the default implementation of the {@link HealthCheckHandler}.
+   * This function creates a new instance of {@link HealthChecks}.
    *
    * @param vertx the Vert.x instance, must not be {@code null}
    * @return the created instance
    */
   static HealthCheckHandler create(Vertx vertx) {
-    Objects.requireNonNull(vertx);
-    return new HealthCheckHandlerImpl(vertx);
+    return create(vertx, null);
+  }
+
+
+  /**
+   * Creates an instance of the default implementation of the {@link HealthCheckHandler}.
+   *
+   * @param hc the health checks object to use, must not be {@code null}
+   * @return the created instance
+   */
+  static HealthCheckHandler create(HealthChecks hc, AuthProvider provider) {
+    return new HealthCheckHandlerImpl(hc, provider);
+  }
+
+  /**
+   * Creates an instance of the default implementation of the {@link HealthCheckHandler}.
+   *
+   * @param hc the health checks object to use
+   * @return the created instance
+   */
+  static HealthCheckHandler create(HealthChecks hc) {
+    return create(hc, null);
   }
 
   /**
@@ -48,6 +83,7 @@ public interface HealthCheckHandler extends Handler<RoutingContext> {
    * @param procedure the procedure, must not be {@code null}
    * @return the current {@link HealthCheckHandler}
    */
+  @Fluent
   HealthCheckHandler register(String name, Handler<Future<Status>> procedure);
 
   /**
@@ -56,6 +92,7 @@ public interface HealthCheckHandler extends Handler<RoutingContext> {
    * @param name the name of the procedure
    * @return the current {@link HealthCheckHandler}
    */
+  @Fluent
   HealthCheckHandler unregister(String name);
 
 

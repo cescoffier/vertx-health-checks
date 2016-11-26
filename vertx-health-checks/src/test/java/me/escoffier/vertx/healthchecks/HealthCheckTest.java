@@ -22,35 +22,7 @@ import static org.hamcrest.Matchers.is;
 /**
  * @author <a href="http://escoffier.me">Clement Escoffier</a>
  */
-public class HealthCheckTest {
-
-  private Vertx vertx;
-  private HealthCheckHandler handler;
-
-  @Before
-  public void setUp() {
-    vertx = Vertx.vertx();
-    Router router = Router.router(vertx);
-    handler = HealthCheckHandler.create(vertx);
-    router.get("/health*").handler(handler);
-
-    AtomicBoolean done = new AtomicBoolean();
-    vertx.createHttpServer()
-      .requestHandler(router::accept)
-      .listen(8080, ar -> done.set(ar.succeeded()));
-    await().untilAtomic(done, is(true));
-
-    RestAssured.baseURI = "http://localhost";
-    RestAssured.port = 8080;
-  }
-
-  @After
-  public void tearDown() {
-    AtomicBoolean done = new AtomicBoolean();
-    vertx.close(v -> done.set(v.succeeded()));
-    await().untilAtomic(done, is(true));
-  }
-
+public class HealthCheckTest extends HealthCheckTestBase {
 
   @Test
   public void testEmptyChecks() {
@@ -400,23 +372,5 @@ public class HealthCheckTest {
     handler.register("bad", null);
   }
 
-
-  public static JsonObject get(int status) {
-    String json = RestAssured.get("/health")
-      .then()
-      .statusCode(status)
-      .header("content-type", "application/json;charset=UTF-8")
-      .extract().asString();
-    return new JsonObject(json);
-  }
-
-  public static JsonObject get(String path, int status) {
-    String json = RestAssured.get("/health/" + path)
-      .then()
-      .statusCode(status)
-      .header("content-type", "application/json;charset=UTF-8")
-      .extract().asString();
-    return new JsonObject(json);
-  }
 
 }

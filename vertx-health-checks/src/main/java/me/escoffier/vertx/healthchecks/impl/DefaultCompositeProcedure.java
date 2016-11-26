@@ -42,7 +42,10 @@ class DefaultCompositeProcedure implements CompositeProcedure {
 
   @Override
   public void check(Handler<JsonObject> resultHandler) {
-    // TODO synchro
+    Map<String, Procedure> copy = new HashMap<>();
+    synchronized (this) {
+      copy.putAll(children);
+    }
 
     JsonObject result = new JsonObject();
     JsonArray checks = new JsonArray();
@@ -50,7 +53,7 @@ class DefaultCompositeProcedure implements CompositeProcedure {
 
     Map<String, Future<JsonObject>> tasks = new HashMap<>();
     List<Future> completed = new ArrayList<>();
-    for (Map.Entry<String, Procedure> entry : children.entrySet()) {
+    for (Map.Entry<String, Procedure> entry : copy.entrySet()) {
       Future<JsonObject> future = Future.future();
       completed.add(future);
       tasks.put(entry.getKey(), future);

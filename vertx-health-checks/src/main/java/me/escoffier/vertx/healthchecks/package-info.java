@@ -2,13 +2,16 @@
  * = Vert.x Health Checks
  *
  * This component provides a simple way to expose health checks. Health checks are used to express the current state
- * of the application in very simple terms: _UP_ or _DOWN_. This component provides a Vert.x Web handler on which you
+ * of the application in very simple terms: _UP_ or _DOWN_. The health checks can be used individually, or in
+ * combination to Vert.x Web or the event bus.
+ *
+ * This component provides a Vert.x Web handler on which you
  * can register procedure testing the health of the application. The handler computes the final state and returns the
  * result as JSON.
  *
  * == Using Vert.x Health Checks
  *
- * Notice that you need Vert.x Web to use this component. In addition add the following dependency:
+ * Notice that you generally need Vert.x Web to use this component. In addition add the following dependency:
  *
  * * Maven (in your `pom.xml`):
  *
@@ -28,26 +31,48 @@
  * compile '${maven.groupId}:${maven.artifactId}:${maven.version}'
  * ----
  *
- * === Registering the handler
+ * === Creating the health check object.
  *
- * First you need to create the health check and then register procedures checking the health:
+ * The central object is {@link me.escoffier.vertx.healthchecks.HealthChecks}. You can create a new instance using:
+ *
+ * [source]
+ * ----
+ * {@link examples.Examples#example1(io.vertx.core.Vertx)}
+ * ----
+ *
+ * Once you have created this object you can register and unregister procedures. See more about this below.
+ *
+ * === Registering the Vert.x Web handler
+ *
+ * To create the Vert.x Web handler managing your health check you can either:
+ *
+ * * using an existing instance of {@link me.escoffier.vertx.healthchecks.HealthChecks}
+ * * let the handler create one instance for you.
  *
  * [source]
  * ----
  * {@link examples.Examples#example2(io.vertx.core.Vertx)}
  * ----
  *
- * Procedure registration is directly made on the {@link me.escoffier.vertx.healthchecks.HealthCheckHandler} instance
- * . It can be done at anytime, even after the route registration or at runtime:
+ * Procedure registration can be directly made on the {@link me.escoffier.vertx.healthchecks.HealthCheckHandler}
+ * instance. Alternatively, if you have created the {@link me.escoffier.vertx.healthchecks.HealthChecks} instance
+ * beforehand, you can register the procedure on this object directly. Registrations and unregistrations can be done at
+ * anytime, even after the route registration:
  *
  * [source]
  * ----
  * {@link examples.Examples#example2(io.vertx.core.Vertx, io.vertx.ext.web.Router)}
  * ----
  *
- * A procedure has a name, and a function (handler) executing the check. This function must not block and report to
- * the given {@link io.vertx.core.Future} whether or not it succeed. Rules are the following:
+ * == Procedures
  *
+ * A procedure is a function checking some aspect of the system to deduce the current health. It reports a
+ * {@link me.escoffier.vertx.healthchecks.Status} indicating whether or not the test has passed or failed. This function
+ * must not block and report to the given {@link io.vertx.core.Future} whether or not it succeed.
+ *
+ * When you register a procedure, you give a name, and the function (handler) executing the check.
+ *
+ * Rules deducing the status are the following
  *
  * * if the future is mark as failed, the check is considered as _KO_
  * * if the future is completed successfully but without a {@link me.escoffier.vertx.healthchecks.Status}, the check
@@ -74,7 +99,8 @@
  *
  * == HTTP responses and JSON Output
  *
- * The overall health check is retrieved using a HTTP GET on the route given when exposing the
+ * When using the Vert.x web handler, the overall health check is retrieved using a HTTP GET or POST (depending on
+ * the route you registered) on the route given when exposing the
  * {@link me.escoffier.vertx.healthchecks.HealthCheckHandler}.
  *
  * If no procedure are registered, the response is `204 - NO CONTENT`, indicating that the system is _UP_ but no
@@ -172,7 +198,19 @@
  *
  * == Authentication
  *
- * // TODO auth
+ * When using the Vert.x web handler, you can pass a {@link io.vertx.ext.auth.AuthProvider} use to authenticate the
+ * request. Check <a href="http://vertx.io/docs/#authentication_and_authorisation">Vert.x Auth</a> for more details
+ * about available authentication providers.
+ *
+ * The Vert.x Web handler creates a JSON object containing:
+ *
+ * * the request headers
+ * * the request params
+ * * the form param if any
+ * * the content as JSON if any and if the request set the content type to `application/json`.
+ *
+ * The resulting object is passed to the auth provider to authenticate the request. If the authentication failed, it
+ * returns a `403 - FORBIDDEN` response.
  *
  */
 @ModuleGen(name = "vertx-health-checks", groupPackage = "me.escoffier.vertx")

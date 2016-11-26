@@ -23,7 +23,6 @@ import static org.hamcrest.Matchers.is;
 @RunWith(VertxUnitRunner.class)
 public class DefaultCompositeHealthCheckTest {
 
-
   private Vertx vertx;
 
   @Before

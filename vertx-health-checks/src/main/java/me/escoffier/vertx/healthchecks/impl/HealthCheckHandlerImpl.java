@@ -1,12 +1,18 @@
 package me.escoffier.vertx.healthchecks.impl;
 
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.web.RoutingContext;
 import me.escoffier.vertx.healthchecks.HealthCheckHandler;
+import me.escoffier.vertx.healthchecks.HealthChecks;
 import me.escoffier.vertx.healthchecks.Status;
 
 import java.util.Objects;
@@ -18,127 +24,94 @@ import static me.escoffier.vertx.healthchecks.impl.StatusHelper.isUp;
  */
 public class HealthCheckHandlerImpl implements HealthCheckHandler {
 
-  private final Vertx vertx;
-  private CompositeProcedure root = new DefaultCompositeProcedure();
+  //TODO Event Bus support
 
-  public HealthCheckHandlerImpl(Vertx vertx) {
-    this.vertx = vertx;
+
+  private HealthChecks healthChecks;
+  private final AuthProvider authProvider;
+
+  public HealthCheckHandlerImpl(Vertx vertx, AuthProvider provider) {
+    this.healthChecks = new HealthChecksImpl(vertx);
+    this.authProvider = provider;
+  }
+
+  public HealthCheckHandlerImpl(HealthChecks hc, AuthProvider provider) {
+    this.healthChecks = Objects.requireNonNull(hc);
+    this.authProvider = provider;
   }
 
   @Override
   public HealthCheckHandler register(String name, Handler<Future<Status>> procedure) {
-    Objects.requireNonNull(name);
-    if (name.isEmpty()) {
-      throw new IllegalArgumentException("The name must not be empty");
-    }
-    Objects.requireNonNull(procedure);
-    String[] segments = name.split("/");
-    CompositeProcedure parent = traverseAndCreate(segments);
-    String lastSegment = segments[segments.length - 1];
-    parent.add(lastSegment,
-      new DefaultProcedure(vertx, lastSegment, 1000, procedure));
+    healthChecks.register(name, procedure);
     return this;
   }
 
-  private CompositeProcedure traverseAndCreate(String[] segments) {
-    int i;
-    CompositeProcedure parent = root;
-    for (i = 0; i < segments.length - 1; i++) {
-      Procedure c = parent.get(segments[i]);
-      if (c == null) {
-        DefaultCompositeProcedure composite = new DefaultCompositeProcedure();
-        parent.add(segments[i], composite);
-        parent = composite;
-      } else if (c instanceof CompositeProcedure) {
-        parent = (CompositeProcedure) c;
-      } else {
-        // Illegal.
-        throw new IllegalArgumentException("Unable to find the procedure `" + segments[i] + "`, `"
-          + segments[i] + "` is not a composite.");
-      }
-    }
 
-    return parent;
+  @Override
+  public void handle(RoutingContext rc) {
+    String id = rc.request().path().substring(rc.currentRoute().getPath().length());
+    if (authProvider != null) {
+      // Copy all HTTP header in a json array and params
+      JsonObject authData = new JsonObject();
+      rc.request().headers().forEach(entry -> authData.put(entry.getKey(), entry.getValue()));
+      rc.request().params().forEach(entry -> authData.put(entry.getKey(), entry.getValue()));
+      if (rc.request().method() == HttpMethod.POST
+        && rc.request()
+        .getHeader(HttpHeaders.CONTENT_TYPE).contains("application/json")) {
+        authData.mergeIn(rc.getBodyAsJson());
+      }
+      authProvider.authenticate(authData, ar -> {
+        if (ar.failed()) {
+          rc.response().setStatusCode(403).end();
+        } else {
+          healthChecks.invoke(id, healthReportHandler(rc));
+        }
+      });
+    } else {
+      healthChecks.invoke(id, healthReportHandler(rc));
+    }
   }
 
-  private CompositeProcedure findLastParent(String[] segments) {
-    int i;
-    CompositeProcedure parent = root;
-    for (i = 0; i < segments.length - 1; i++) {
-      Procedure c = parent.get(segments[i]);
-      if (c instanceof CompositeProcedure) {
-        parent = (CompositeProcedure) c;
+  private Handler<AsyncResult<JsonObject>> healthReportHandler(RoutingContext rc) {
+    return json -> {
+      HttpServerResponse response = rc.response()
+        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json;charset=UTF-8");
+      if (json.failed()) {
+        if (json.cause().getMessage().toLowerCase().contains("not found")) {
+          response.setStatusCode(404);
+        } else {
+          response.setStatusCode(400);
+        }
+        response.end("{\"message\": \"" + json.cause().getMessage() + "\"}");
       } else {
-        return null;
+        buildResponse(json.result(), response);
       }
+    };
+  }
+
+  private void buildResponse(JsonObject json, HttpServerResponse response) {
+    int status = isUp(json) ? 200 : 503;
+
+    if (status == 503 && hasProcedureError(json)) {
+      status = 500;
     }
-    return parent;
+
+    JsonArray checks = json.getJsonArray("checks");
+    if (status == 200 && checks != null && checks.isEmpty()) {
+      // Special case, no procedure installed.
+      response.setStatusCode(204).end();
+      return;
+    }
+
+    response
+      .setStatusCode(status)
+      .end(transform(json));
   }
 
   @Override
   public synchronized HealthCheckHandler unregister(String name) {
-    Objects.requireNonNull(name);
-    if (name.isEmpty()) {
-      throw new IllegalArgumentException("The name must not be empty");
-    }
-    String[] segments = name.split("/");
-    CompositeProcedure parent = findLastParent(segments);
-    if (parent != null) {
-      String lastSegment = segments[segments.length - 1];
-      parent.remove(lastSegment);
-    }
+    healthChecks.unregister(name);
     return this;
-  }
-
-  @Override
-  public void handle(RoutingContext rc) {
-    Procedure check = root;
-
-    String id = rc.request().path().substring(rc.currentRoute().getPath().length());
-    if (!id.isEmpty()) {
-      String[] segments = id.split("/");
-      for (String segment : segments) {
-        if (segment.trim().isEmpty()) {
-          continue;
-        }
-        if (check instanceof CompositeProcedure) {
-          check = ((CompositeProcedure) check).get(segment);
-          if (check == null) {
-            rc.response().setStatusCode(404)
-              .putHeader("content-type", "application/json;charset=UTF-8")
-              .end("{\"error\":\"Procedure not found '" + segment + "'\"}");
-            return;
-          }
-        } else {
-          // Not a composite
-          rc.response().setStatusCode(400)
-            .putHeader("content-type", "application/json;charset=UTF-8")
-            .end("{\"error\":\"The procedure '" + segment + "' cannot be a child of a " +
-              "leaf\"}");
-          return;
-        }
-      }
-    }
-
-    check.check(json -> {
-      int status = isUp(json) ? 200 : 503;
-
-      if (status == 503 && hasProcedureError(json)) {
-        status = 500;
-      }
-
-      JsonArray checks = json.getJsonArray("checks");
-      if (status == 200 && checks != null && checks.isEmpty()) {
-        // Special case, no procedure installed.
-        rc.response().setStatusCode(204).end();
-        return;
-      }
-
-      rc.response()
-        .putHeader("content-type", "application/json;charset=UTF-8")
-        .setStatusCode(status)
-        .end(transform(json));
-    });
   }
 
   private boolean hasProcedureError(JsonObject json) {

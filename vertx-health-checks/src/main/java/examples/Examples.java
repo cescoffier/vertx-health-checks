@@ -7,6 +7,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.types.HttpEndpoint;
 import me.escoffier.vertx.healthchecks.HealthCheckHandler;
+import me.escoffier.vertx.healthchecks.HealthChecks;
 import me.escoffier.vertx.healthchecks.Status;
 
 /**
@@ -14,13 +15,22 @@ import me.escoffier.vertx.healthchecks.Status;
  */
 public class Examples {
 
+  public void example1(Vertx vertx) {
+    HealthChecks hc = HealthChecks.create(vertx);
+
+    hc.register("my-procedure", future -> future.complete(Status.OK()));
+  }
+
   public void example2(Vertx vertx) {
-    HealthCheckHandler healthCheckHandler = HealthCheckHandler.create(vertx);
+    HealthCheckHandler healthCheckHandler1 = HealthCheckHandler.create(vertx);
+    HealthCheckHandler healthCheckHandler2 = HealthCheckHandler.create(HealthChecks.create(vertx));
 
     Router router = Router.router(vertx);
     // Populate the router with routes...
     // Register the health check handler
-    router.get("/health").handler(healthCheckHandler);
+    router.get("/health*").handler(healthCheckHandler1);
+    // Or
+    router.get("/ping*").handler(healthCheckHandler2);
   }
 
 
