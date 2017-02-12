@@ -8,25 +8,16 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-ext-parent</artifactId>
-    <version>23</version>
+    <version>24</version>
   </parent>
 
-  <groupId>me.escoffier.vertx.healthchecks</groupId>
-  <artifactId>vertx-healthchecks-project</artifactId>
-  <version>1.0-SNAPSHOT</version>
-
-  <packaging>pom</packaging>
+  <artifactId>vertx-health-checks</artifactId>
+  <version>3.4.0-SNAPSHOT</version>
 
   <properties>
     <vertx.version>3.4.0-SNAPSHOT</vertx.version>
-    <doc.skip>true</doc.skip>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
-
-  <modules>
-    <module>vertx-health-checks</module>
-  </modules>
 
   <dependencyManagement>
     <dependencies>
@@ -109,13 +100,13 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.5.2</version>
+      <version>3.6.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
-      <version>3.0.1</version>
+      <version>3.0.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -123,6 +114,23 @@
       <artifactId>guava</artifactId>
       <version>19.0</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-jdbc-client</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.hsqldb</groupId>
+      <artifactId>hsqldb</artifactId>
+      <version>2.3.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-discovery</artifactId>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 

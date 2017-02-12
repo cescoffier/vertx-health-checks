@@ -1,4 +1,0 @@
-moduleName = vertx-health-checks-module
-moduleVersion = 1.0
-extensionClasses = me.escoffier.vertx.groovy.healthchecks.GroovyExtension
-staticExtensionClasses = me.escoffier.vertx.groovy.healthchecks.GroovyStaticExtension
